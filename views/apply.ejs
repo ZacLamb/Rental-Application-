@@ -1,0 +1,107 @@
+<%- include('partials/head', { title: 'Rental application for ' + property.name }) %>
+<body>
+  <header class="masthead">
+    <div class="wrap">
+      <h1>Apply to rent at <%= property.name %></h1>
+      <p class="masthead-address"><%= property.address %></p>
+      <dl class="terms">
+        <div><dt>Monthly rent</dt><dd><%= money(property.rent) %></dd></div>
+        <div><dt>Due at lease signing</dt><dd><%= money(property.rent + property.lastMonth + property.deposit) %></dd></div>
+        <div><dt>Application fee</dt><dd>None</dd></div>
+      </dl>
+      <p class="terms-detail">The amount due at signing is first month&rsquo;s rent (<%= money(property.rent) %>)<% if (property.lastMonth) { %>, last month&rsquo;s rent (<%= money(property.lastMonth) %>)<% } %><% if (property.deposit) { %> and a security deposit (<%= money(property.deposit) %>)<% } %>. Nothing is due until then.</p>
+    </div>
+  </header>
+
+  <div class="wrap layout">
+    <nav class="rail" aria-label="Sections of this application">
+      <ol>
+        <% sections.forEach((s) => { %><li><a href="#<%= s.id %>"><%= s.title %></a></li><% }) %>
+        <li><a href="#sign">Sign and send</a></li>
+      </ol>
+      <p class="rail-note">About 10 minutes. Each adult who will live in the unit sends their own application.</p>
+    </nav>
+
+    <main>
+      <% if (notice) { %><div class="notice" role="alert" id="notice" tabindex="-1"><%= notice %></div><% } %>
+
+      <form method="post" action="/apply" enctype="multipart/form-data" id="application">
+        <div class="trap" aria-hidden="true">
+          <label for="website">Leave this empty</label>
+          <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+
+        <% sections.forEach((s, si) => { %>
+        <section class="step" id="<%= s.id %>">
+          <h2><span class="step-n"><%= si + 1 %></span><%= s.title %></h2>
+          <% if (s.intro) { %><p class="intro"><%= s.intro %></p><% } %>
+
+          <% s.blocks.forEach((b) => { %>
+            <% if (b.type === 'group') { %>
+              <% if (b.title) { %><h3><%= b.title %></h3><% } %>
+              <div class="grid">
+                <% b.fields.forEach((f) => { %>
+                  <%- include('partials/field', { f, id: 'f-' + f.name, name: f.name, value: data[f.name] || '', error: errors[f.name], explainValue: f.explain ? data[f.explain] || '' : '', explainError: f.explain ? errors[f.explain] : '' }) %>
+                <% }) %>
+              </div>
+            <% } else if (b.type === 'repeat') { %>
+              <h3><%= b.title %></h3>
+              <% if (b.intro) { %><p class="intro"><%= b.intro %></p><% } %>
+              <% for (let i = 0; i < b.rows; i++) { const row = (data[b.name] || [])[i] || {}; %>
+              <fieldset class="row">
+                <legend><%= b.rowLabel %> <%= i + 1 %></legend>
+                <div class="grid">
+                  <% b.fields.forEach((f) => { %>
+                    <%- include('partials/field', { f, id: 'f-' + b.name + '-' + i + '-' + f.name, name: b.name + '[' + i + '][' + f.name + ']', value: row[f.name] || '', error: '', explainValue: '', explainError: '' }) %>
+                  <% }) %>
+                </div>
+              </fieldset>
+              <% } %>
+            <% } else if (b.type === 'files') { %>
+              <h3><%= b.title %></h3>
+              <p class="intro"><%= b.intro %></p>
+              <div class="field<%= errors[b.name] ? ' field-error' : '' %>">
+                <label for="f-<%= b.name %>">Attach files</label>
+                <p class="hint" id="f-<%= b.name %>-hint">Up to <%= MAX_FILES %> files, <%= MAX_FILE_MB %> MB each. PDF, JPG, PNG or HEIC. Phone photos are fine.</p>
+                <input id="f-<%= b.name %>" name="<%= b.name %>" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,application/pdf,image/*" aria-describedby="f-<%= b.name %>-hint" data-max-files="<%= MAX_FILES %>" data-max-mb="<%= MAX_FILE_MB %>">
+                <p class="error" id="f-<%= b.name %>-err"<%= errors[b.name] ? '' : ' hidden' %>><%= errors[b.name] || '' %></p>
+              </div>
+            <% } else if (b.type === 'note') { %>
+              <p class="note<%= b.legal ? ' note-legal' : '' %>"><% if (b.legal) { %><strong>Notice required by Massachusetts law.</strong> <% } %><%= b.text %></p>
+            <% } %>
+          <% }) %>
+        </section>
+        <% }) %>
+
+        <section class="step" id="sign">
+          <h2><span class="step-n"><%= sections.length + 1 %></span>Sign and send</h2>
+          <p class="intro">By signing, you confirm and agree to the following.</p>
+          <ul class="agreements">
+            <% agreements.forEach((a) => { %><li><%= a %></li><% }) %>
+          </ul>
+          <div class="field<%= errors.agree ? ' field-error' : '' %>">
+            <label class="choice choice-block"><input type="checkbox" name="agree" value="yes" required<%= data.agree ? ' checked' : '' %>><span>I have read the statements above and agree to them.</span></label>
+            <% if (errors.agree) { %><p class="error"><%= errors.agree %></p><% } %>
+          </div>
+          <div class="grid">
+            <div class="field field-half<%= errors.signature ? ' field-error' : '' %>">
+              <label for="f-signature">Type your full legal name <span class="req">required</span></label>
+              <input id="f-signature" class="signature" name="signature" type="text" maxlength="200" required value="<%= data.signature || '' %>" autocomplete="off">
+              <% if (errors.signature) { %><p class="error"><%= errors.signature %></p><% } %>
+            </div>
+            <div class="field field-half">
+              <span class="label">Date</span>
+              <p class="static"><%= new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', dateStyle: 'long' }) %></p>
+            </div>
+          </div>
+          <button type="submit" class="button">Send application</button>
+          <p class="hint">Your answers go only to the property owner and are used only to evaluate this application.<% if (property.contactEmail) { %> Questions? Email <a href="mailto:<%= property.contactEmail %>"><%= property.contactEmail %></a>.<% } %></p>
+        </section>
+      </form>
+
+      <p class="fair-housing"><%= fairHousing %></p>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

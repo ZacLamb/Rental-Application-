@@ -1,0 +1,84 @@
+<%- include('partials/head', { title: application.full_name }) %>
+<% const d = application.data; %>
+<body class="admin">
+  <header class="admin-bar">
+    <div class="wrap-wide">
+      <a href="/admin">All applications</a>
+      <span class="admin-actions">
+        <button type="button" class="link" data-print>Print or save as PDF</button>
+      </span>
+    </div>
+  </header>
+  <main class="wrap-wide detail">
+    <h1><%= application.full_name %></h1>
+    <p class="sub">Sent <%= when(application.created_at) %> Eastern. <%= application.phone %> / <a href="mailto:<%= application.email %>"><%= application.email %></a></p>
+
+    <div class="summary">
+      <form method="post" action="/admin/applications/<%= application.id %>/status" class="status-form">
+        <input type="hidden" name="_csrf" value="<%= csrf %>">
+        <label for="status">Status</label>
+        <select id="status" name="status" class="status status-<%= application.status.toLowerCase() %>" data-autosubmit>
+          <% STATUSES.forEach((s) => { %><option<%= application.status === s ? ' selected' : '' %>><%= s %></option><% }) %>
+        </select>
+        <noscript><button type="submit">Save</button></noscript>
+      </form>
+      <p>Stated monthly income <strong><%= income ? money(income) : 'not given' %></strong> against rent of <strong><%= money(property.rent) %></strong><% if (income) { %> (<%= (income / property.rent).toFixed(1) %> times rent)<% } %></p>
+    </div>
+
+    <section>
+      <h2>Proof of income</h2>
+      <% if (!application.files.length) { %><p class="empty">No files attached.</p><% } else { %>
+      <ul class="files">
+        <% application.files.forEach((f) => { %><li><a href="/admin/files/<%= f.id %>"><%= f.filename %></a> <span class="sub"><%= fileSize(f.size) %></span></li><% }) %>
+      </ul>
+      <% } %>
+    </section>
+
+    <% sections.forEach((s) => { %>
+    <section>
+      <h2><%= s.title %></h2>
+      <% s.blocks.forEach((b) => { %>
+        <% if (b.type === 'group') { %>
+          <% if (b.title) { %><h3><%= b.title %></h3><% } %>
+          <dl class="answers">
+            <% b.fields.forEach((f) => { let v = d[f.name] || ''; if (f.type === 'yesno' && v === 'No') v = f.noLabel; if (f.type === 'money' && v) v = '$' + v.replace(/^\$/, ''); if (f.type === 'date') v = day(v); %>
+            <div<%= f.type === 'yesno' && d[f.name] === 'Yes' ? ' class="flag"' : '' %>><dt><%= f.label %></dt><dd><%= v || '—' %><% if (f.explain && d[f.explain]) { %><span class="explain-text"><%= d[f.explain] %></span><% } %></dd></div>
+            <% }) %>
+          </dl>
+        <% } else if (b.type === 'repeat') { const rows = (d[b.name] || []).filter((r) => !rowIsEmpty(b, r)); %>
+          <h3><%= b.title %></h3>
+          <% if (!rows.length) { %><p class="empty">None listed.</p><% } else { %>
+          <div class="table-scroll"><table class="mini">
+            <thead><tr><% b.fields.forEach((f) => { %><th><%= f.label %></th><% }) %></tr></thead>
+            <tbody><% rows.forEach((r) => { %><tr><% b.fields.forEach((f) => { %><td><%= f.type === 'money' && r[f.name] ? '$' + r[f.name].replace(/^\$/, '') : r[f.name] %></td><% }) %></tr><% }) %></tbody>
+          </table></div>
+          <% } %>
+        <% } %>
+      <% }) %>
+    </section>
+    <% }) %>
+
+    <section>
+      <h2>Signature</h2>
+      <dl class="answers">
+        <div><dt>Signed as</dt><dd><%= d.signature %></dd></div>
+        <div><dt>Signed</dt><dd><%= when(d.signed_at || application.created_at) %> Eastern</dd></div>
+        <div><dt>From</dt><dd>IP <%= application.signed_ip %></dd></div>
+      </dl>
+      <p class="sub">The applicant agreed to:</p>
+      <ul class="agreements"><% agreements.forEach((a) => { %><li><%= a %></li><% }) %></ul>
+    </section>
+
+    <section class="danger no-print">
+      <h2>Delete this application</h2>
+      <p>Removes the answers and attached files for good. Use this once you no longer need them.</p>
+      <form method="post" action="/admin/applications/<%= application.id %>/delete">
+        <input type="hidden" name="_csrf" value="<%= csrf %>">
+        <label class="choice choice-block"><input type="checkbox" required><span>Yes, delete <%= application.full_name %>&rsquo;s application</span></label>
+        <button type="submit" class="button button-danger">Delete application</button>
+      </form>
+    </section>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<%- include('partials/head', { title: 'Application sent' }) %>
+<body>
+  <header class="masthead masthead-short">
+    <div class="wrap">
+      <h1>Application sent</h1>
+      <p class="masthead-address"><%= property.address %></p>
+    </div>
+  </header>
+  <div class="wrap">
+    <main class="plain">
+      <p>Thank you. The owner has your application and will contact your references and get back to you by phone or email.</p>
+      <p>If other adults will live in the unit, each of them sends their own application from <a href="/">this same link</a>.</p>
+      <% if (property.contactEmail) { %><p>Questions? Email <a href="mailto:<%= property.contactEmail %>"><%= property.contactEmail %></a>.</p><% } %>
+    </main>
+  </div>
+</body>
+</html>

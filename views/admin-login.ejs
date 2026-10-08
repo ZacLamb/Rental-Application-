@@ -1,0 +1,15 @@
+<%- include('partials/head', { title: 'Sign in' }) %>
+<body class="admin">
+  <main class="login">
+    <h1>Applications for <%= property.name %></h1>
+    <% if (error) { %><div class="notice" role="alert"><%= error %></div><% } %>
+    <form method="post" action="/admin/login">
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required autofocus autocomplete="current-password">
+      </div>
+      <button type="submit" class="button">Sign in</button>
+    </form>
+  </main>
+</body>
+</html>

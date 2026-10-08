@@ -1,0 +1,49 @@
+<%- include('partials/head', { title: 'Applications' }) %>
+<body class="admin">
+  <header class="admin-bar">
+    <div class="wrap-wide">
+      <strong><%= property.name %> applications</strong>
+      <span class="admin-actions">
+        <a href="/" target="_blank" rel="noopener">Open the form</a>
+        <a href="/admin/export.csv">Download spreadsheet</a>
+        <form method="post" action="/admin/logout"><input type="hidden" name="_csrf" value="<%= csrf %>"><button type="submit" class="link">Sign out</button></form>
+      </span>
+    </div>
+  </header>
+  <main class="wrap-wide">
+    <h1><%= applications.length %> <%= applications.length === 1 ? 'application' : 'applications' %></h1>
+    <% if (!applications.length) { %>
+      <p class="empty">Nothing yet. Send applicants the link to the form and their answers will show up here.</p>
+    <% } else { %>
+    <div class="table-scroll">
+      <table class="list">
+        <thead>
+          <tr><th>Applicant</th><th>Sent</th><th>Move-in</th><th class="num">Stated monthly income</th><th>Files</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <% applications.forEach((a) => { %>
+          <tr>
+            <td><a href="/admin/applications/<%= a.id %>"><%= a.full_name %></a><span class="sub"><%= a.phone %> / <%= a.email %></span></td>
+            <td><%= when(a.created_at) %></td>
+            <td><%= day(a.data.move_in_date) %></td>
+            <td class="num"><%= a.income ? money(a.income) : '' %></td>
+            <td><%= a.file_count || '' %></td>
+            <td>
+              <form method="post" action="/admin/applications/<%= a.id %>/status" class="status-form">
+                <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="back" value="list">
+                <select name="status" aria-label="Status for <%= a.full_name %>" class="status status-<%= a.status.toLowerCase() %>" data-autosubmit>
+                  <% STATUSES.forEach((s) => { %><option<%= a.status === s ? ' selected' : '' %>><%= s %></option><% }) %>
+                </select>
+                <noscript><button type="submit">Save</button></noscript>
+              </form>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
+</html>

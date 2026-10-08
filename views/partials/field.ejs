@@ -1,0 +1,38 @@
+<%
+  const hintId = f.hint ? id + '-hint' : '';
+  const errId = error ? id + '-err' : '';
+  const described = [hintId, errId].filter(Boolean).join(' ');
+%>
+<div class="field<%= f.half ? ' field-half' : '' %><%= error ? ' field-error' : '' %>"<% if (f.showWhen) { %> data-show-when="<%= f.showWhen.field %>" data-show-equals="<%= f.showWhen.equals %>"<% } %>>
+<% if (f.type === 'yesno') { %>
+  <fieldset class="yesno">
+    <legend><%= f.label %></legend>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="<%= name %>" value="No" required<%= value === 'No' ? ' checked' : '' %>><span><%= f.noLabel %></span></label>
+      <label class="choice"><input type="radio" name="<%= name %>" value="Yes" required<%= value === 'Yes' ? ' checked' : '' %>><span>Yes</span></label>
+    </div>
+    <% if (error) { %><p class="error" id="<%= errId %>"><%= error %></p><% } %>
+    <div class="explain<%= explainError ? ' field-error' : '' %>" data-show-when="<%= name %>" data-show-equals="Yes">
+      <label for="<%= id %>-explain">Please explain</label>
+      <textarea id="<%= id %>-explain" name="<%= f.explain %>" rows="2" maxlength="2000"<%= f.explainRequired ? ' data-required-when-shown' : '' %>><%= explainValue %></textarea>
+      <% if (explainError) { %><p class="error"><%= explainError %></p><% } %>
+    </div>
+  </fieldset>
+<% } else { %>
+  <label for="<%= id %>"><%= f.label %><% if (f.required) { %> <span class="req">required</span><% } %></label>
+  <% if (f.hint) { %><p class="hint" id="<%= hintId %>"><%= f.hint %></p><% } %>
+  <% if (f.type === 'select') { %>
+    <select id="<%= id %>" name="<%= name %>"<%= f.required ? ' required' : '' %><% if (described) { %> aria-describedby="<%= described %>"<% } %>>
+      <option value=""<%= !value ? ' selected' : '' %>>Choose</option>
+      <% f.options.forEach((o) => { %><option<%= value === o ? ' selected' : '' %>><%= o %></option><% }) %>
+    </select>
+  <% } else if (f.type === 'textarea') { %>
+    <textarea id="<%= id %>" name="<%= name %>" rows="3" maxlength="2000"<% if (described) { %> aria-describedby="<%= described %>"<% } %>><%= value %></textarea>
+  <% } else if (f.type === 'money') { %>
+    <div class="money"><span aria-hidden="true">$</span><input id="<%= id %>" name="<%= name %>" type="text" inputmode="decimal" maxlength="20" value="<%= value %>"<% if (described) { %> aria-describedby="<%= described %>"<% } %>></div>
+  <% } else { %>
+    <input id="<%= id %>" name="<%= name %>" type="<%= f.type || 'text' %>" maxlength="2000" value="<%= value %>"<%= f.required ? ' required' : '' %><% if (f.autocomplete) { %> autocomplete="<%= f.autocomplete %>"<% } %><% if (described) { %> aria-describedby="<%= described %>"<% } %>>
+  <% } %>
+  <% if (error) { %><p class="error" id="<%= errId %>"><%= error %></p><% } %>
+<% } %>
+</div>
