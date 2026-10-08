@@ -681,6 +681,10 @@ th {
   font-variant-numeric: tabular-nums;
 }
 
+.nowrap {
+  white-space: nowrap;
+}
+
 .list td a {
   font-weight: 700;
 }

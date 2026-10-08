@@ -3,7 +3,7 @@
 An online rental application for the Deer Crossing condo in Mashpee, MA, with a private page for reviewing what applicants send.
 
 - `/` is the application form. Send this link to applicants.
-- `/admin` is the review page. It asks for your password.
+- `/admin` is the review page. It asks for your password. From there you can download a PDF of any application, or one PDF with all of them.
 
 Answers and attached proof-of-income files are stored in the Postgres database. Nothing is emailed.
 

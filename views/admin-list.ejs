@@ -5,6 +5,7 @@
       <strong><%= property.name %> applications</strong>
       <span class="admin-actions">
         <a href="/" target="_blank" rel="noopener">Open the form</a>
+        <% if (applications.length) { %><a href="/admin/applications.pdf">Download all as PDF</a><% } %>
         <a href="/admin/export.csv">Download spreadsheet</a>
         <form method="post" action="/admin/logout"><input type="hidden" name="_csrf" value="<%= csrf %>"><button type="submit" class="link">Sign out</button></form>
       </span>
@@ -18,14 +19,14 @@
     <div class="table-scroll">
       <table class="list">
         <thead>
-          <tr><th>Applicant</th><th>Sent</th><th>Move-in</th><th class="num">Stated monthly income</th><th>Files</th><th>Status</th></tr>
+          <tr><th>Applicant</th><th>Sent</th><th>Move-in</th><th class="num">Stated monthly income</th><th>Files</th><th>Status</th><th>PDF</th></tr>
         </thead>
         <tbody>
           <% applications.forEach((a) => { %>
           <tr>
             <td><a href="/admin/applications/<%= a.id %>"><%= a.full_name %></a><span class="sub"><%= a.phone %> / <%= a.email %></span></td>
-            <td><%= when(a.created_at) %></td>
-            <td><%= day(a.data.move_in_date) %></td>
+            <td class="nowrap"><%= when(a.created_at) %></td>
+            <td class="nowrap"><%= day(a.data.move_in_date) %></td>
             <td class="num"><%= a.income ? money(a.income) : '' %></td>
             <td><%= a.file_count || '' %></td>
             <td>
@@ -37,6 +38,7 @@
                 <noscript><button type="submit">Save</button></noscript>
               </form>
             </td>
+            <td><a href="/admin/applications/<%= a.id %>/pdf" aria-label="Download PDF of <%= a.full_name %>&rsquo;s application">Download</a></td>
           </tr>
           <% }) %>
         </tbody>

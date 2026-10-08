@@ -8,6 +8,7 @@ const multer = require('multer');
 
 const db = require('./lib/db');
 const form = require('./lib/form');
+const { buildPdf } = require('./lib/pdf');
 
 const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
@@ -309,6 +310,36 @@ admin.get(
       STATUSES,
       income: form.monthlyIncome(application.data),
     });
+  })
+);
+
+const pdfContext = { property, sections, agreements, money, day, when, fileSize, rowIsEmpty: form.rowIsEmpty };
+const safeName = (v) => String(v).replace(/[^\p{L}\p{N} .'-]/gu, '').trim().slice(0, 80) || 'applicant';
+function sendPdf(res, filename, applications) {
+  res.set('Content-Type', 'application/pdf');
+  res.set(
+    'Content-Disposition',
+    `attachment; filename="${filename.replace(/[^\x20-\x7e]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(filename)}`
+  );
+  buildPdf(applications, pdfContext, res);
+}
+
+admin.get(
+  '/applications/:id/pdf',
+  wrap(async (req, res, next) => {
+    if (!isUuid(req.params.id)) return next();
+    const application = await db.getApplication(req.params.id);
+    if (!application) return next();
+    sendPdf(res, `Rental application - ${safeName(application.full_name)}.pdf`, [application]);
+  })
+);
+
+admin.get(
+  '/applications.pdf',
+  wrap(async (req, res) => {
+    const applications = await db.listApplicationsWithFiles();
+    if (!applications.length) return res.redirect('/admin');
+    sendPdf(res, `Rental applications - ${safeName(property.name)}.pdf`, applications);
   })
 );
 
